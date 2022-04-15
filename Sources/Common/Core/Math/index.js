@@ -860,6 +860,13 @@ export function jacobiN(a, n, w, v) {
     return 0;
   }
 
+  for (let l = 0; l < n; l++) {
+    for (let s = 0; s < n; s++) {
+      v[l][s] = roundNumber(v[l][s], 6);
+    }
+    w[l] = roundNumber(w[l], 6);
+  }
+
   // sort eigenfunctions: these changes do not affect accuracy
   for (j = 0; j < n - 1; j++) {
     // boundary incorrect
