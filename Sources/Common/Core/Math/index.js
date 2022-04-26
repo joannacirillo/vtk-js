@@ -864,7 +864,6 @@ export function jacobiN(a, n, w, v) {
     for (let s = 0; s < n; s++) {
       v[l][s] = roundNumber(v[l][s], 6);
     }
-    w[l] = roundNumber(w[l], 6);
   }
 
   // sort eigenfunctions: these changes do not affect accuracy
@@ -874,7 +873,7 @@ export function jacobiN(a, n, w, v) {
     tmp = w[k];
     for (i = j + 1; i < n; i++) {
       // boundary incorrect, shifted already
-      if (w[i] >= tmp || Math.abs(w[i] - tmp) < VTK_SMALL_NUMBER) {
+      if (w[i] >= tmp) {
         // why exchange if same?
         k = i;
         tmp = w[k];
@@ -908,6 +907,11 @@ export function jacobiN(a, n, w, v) {
       }
     }
   }
+
+  for (let l = 0; l < n; l++) {
+    w[l] = roundNumber(w[l],6);
+  }
+
   return 1;
 }
 
