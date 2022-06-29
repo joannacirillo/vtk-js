@@ -52,6 +52,19 @@ async function ctrlPress(interactor) {
   );
 }
 
+async function shiftPress(interactor) {
+  interactor.handleKeyDown(
+    new KeyboardEvent('keydown', {
+      altKey: false,
+      charCode: 0,
+      shiftKey: true,
+      ctrlKey: false,
+      key: 'Shift',
+      keyCode: 16,
+    })
+  );
+}
+
 // --------------------------------------------------------
 
 async function placeHandles(interactor, renderWindow) {
@@ -110,22 +123,23 @@ async function placeHandlesWithCtrl(interactor, renderWindow) {
   await leftRelease(interactor, x, y);
 }
 
-// async function placeHandlesWithShift(interactor, renderWindow) {
-//   let [x, y] = renderWindow.getSize();
-//   x /= 2;
-//   y /= 2;
+async function placeHandlesWithShift(interactor, renderWindow) {
+  let [x, y] = renderWindow.getSize();
+  x /= 2;
+  y /= 2;
 
-//   // Place first handle
-//   await leftPress(interactor, x, y);
-//   await leftRelease(interactor, x, y);
+  // Place first handle
+  await leftPress(interactor, x, y);
+  await leftRelease(interactor, x, y);
 
-//   await shiftPress(interactor);
-//   x += 100;
-//   y -= 50;
-//   // Place second handle
-//   await leftPress(interactor, x, y);
-//   await leftRelease(interactor, x, y);
-// }
+  await shiftPress(interactor);
+  x += 100;
+  y -= 50;
+
+  // Place second handle
+  await leftPress(interactor, x, y);
+  await leftRelease(interactor, x, y);
+}
 
 test.only('Test Ellipse Widget', async (t) => {
   const gc = testUtils.createGarbageCollector(t);
@@ -170,5 +184,12 @@ test.only('Test Ellipse Widget', async (t) => {
     await placeHandlesWithCtrl(interactor, renderWindow);
   });
   renderer.resetCamera();
-  gc.releaseResources();
+  await ellipseWidgetProp.reset();
+  await ellipseWidgetProp.updateRepresentationForRender();
+  await widgetManager.grabFocus(w);
+  t.doesNotThrow(async () => {
+    await placeHandlesWithShift(interactor, renderWindow);
+  });
+  // renderer.resetCamera();
+  // gc.releaseResources();
 });
