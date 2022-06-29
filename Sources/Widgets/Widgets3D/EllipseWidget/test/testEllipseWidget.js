@@ -65,6 +65,7 @@ async function placeHandles(interactor, renderWindow) {
 
   x += 100;
   y -= 50;
+
   // Place second handle
   await leftPress(interactor, x, y);
   await leftRelease(interactor, x, y);
@@ -96,8 +97,6 @@ async function placeHandlesWithCtrl(interactor, renderWindow) {
   x /= 2;
   y /= 2;
 
-  x -= 200;
-  y -= 200;
   // Place first handle
   await leftPress(interactor, x, y);
   await leftRelease(interactor, x, y);
@@ -105,6 +104,7 @@ async function placeHandlesWithCtrl(interactor, renderWindow) {
   await ctrlPress(interactor);
   x += 100;
   y -= 50;
+
   // Place second handle
   await leftPress(interactor, x, y);
   await leftRelease(interactor, x, y);
@@ -155,11 +155,11 @@ test.only('Test Ellipse Widget', async (t) => {
 
   widgetManager.enablePicking();
   renderWindow.render();
-  renderer.resetCamera();
 
   t.doesNotThrow(async () => {
     await placeHandles(interactor, renderWindow);
   });
+  renderer.resetCamera();
   t.doesNotThrow(async () => {
     await moveHandles(interactor, renderWindow);
   });
@@ -169,5 +169,6 @@ test.only('Test Ellipse Widget', async (t) => {
   t.doesNotThrow(async () => {
     await placeHandlesWithCtrl(interactor, renderWindow);
   });
-  // gc.releaseResources();
+  renderer.resetCamera();
+  gc.releaseResources();
 });
