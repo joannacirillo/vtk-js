@@ -22,6 +22,12 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function reset(representation, widgetManager, widget) {
+  await representation.reset();
+  await representation.updateRepresentationForRender();
+  await widgetManager.grabFocus(widget);
+}
+
 async function leftPress(interactor, x, y) {
   interactor.handleMouseDown(
     new MouseEvent('mousedown', { clientX: x, clientY: y })
@@ -52,6 +58,18 @@ async function ctrlPress(interactor) {
   );
 }
 
+async function ctrlRelease(interactor) {
+  interactor.handleKeyUp(
+    new KeyboardEvent('keyup', {
+      ctrlKey: true,
+      altKey: false,
+      shiftKey: false,
+      keyCode: 0,
+      key: 'Control',
+    })
+  );
+}
+
 async function shiftPress(interactor) {
   interactor.handleKeyDown(
     new KeyboardEvent('keydown', {
@@ -60,7 +78,18 @@ async function shiftPress(interactor) {
       shiftKey: true,
       ctrlKey: false,
       key: 'Shift',
-      keyCode: 16,
+    })
+  );
+}
+
+async function shiftRelease(interactor) {
+  interactor.handleKeyUp(
+    new KeyboardEvent('keyup', {
+      altKey: false,
+      charCode: 0,
+      shiftKey: true,
+      ctrlKey: false,
+      key: 'Shift',
     })
   );
 }
@@ -121,6 +150,7 @@ async function placeHandlesWithCtrl(interactor, renderWindow) {
   // Place second handle
   await leftPress(interactor, x, y);
   await leftRelease(interactor, x, y);
+  await ctrlRelease(interactor);
 }
 
 async function placeHandlesWithShift(interactor, renderWindow) {
@@ -133,12 +163,13 @@ async function placeHandlesWithShift(interactor, renderWindow) {
   await leftRelease(interactor, x, y);
 
   await shiftPress(interactor);
-  x += 100;
-  y -= 50;
+  x += 6;
+  y -= 2;
 
   // Place second handle
   await leftPress(interactor, x, y);
   await leftRelease(interactor, x, y);
+  await shiftRelease(interactor);
 }
 
 test.only('Test Ellipse Widget', async (t) => {
@@ -164,32 +195,35 @@ test.only('Test Ellipse Widget', async (t) => {
   widgetManager.setRenderer(renderer);
 
   const w = gc.registerResource(vtkEllipseWidget.newInstance());
-  const ellipseWidgetProp = widgetManager.addWidget(w);
+  const ellipseWidgetRepresentation = widgetManager.addWidget(w);
   widgetManager.grabFocus(w);
-
   widgetManager.enablePicking();
-  renderWindow.render();
 
   t.doesNotThrow(async () => {
     await placeHandles(interactor, renderWindow);
   });
-  renderer.resetCamera();
+  await renderer.resetCamera();
+  await renderWindow.render();
   t.doesNotThrow(async () => {
     await moveHandles(interactor, renderWindow);
   });
-  await ellipseWidgetProp.reset();
-  await ellipseWidgetProp.updateRepresentationForRender();
+  await ellipseWidgetRepresentation.reset();
+  await ellipseWidgetRepresentation.updateRepresentationForRender();
   await widgetManager.grabFocus(w);
-  t.doesNotThrow(async () => {
-    await placeHandlesWithCtrl(interactor, renderWindow);
-  });
-  renderer.resetCamera();
-  await ellipseWidgetProp.reset();
-  await ellipseWidgetProp.updateRepresentationForRender();
-  await widgetManager.grabFocus(w);
+
   t.doesNotThrow(async () => {
     await placeHandlesWithShift(interactor, renderWindow);
   });
-  // renderer.resetCamera();
+  await renderer.resetCamera();
+  await renderWindow.render();
+  await ellipseWidgetRepresentation.reset();
+  await ellipseWidgetRepresentation.updateRepresentationForRender();
+  await widgetManager.grabFocus(w);
+
+  t.doesNotThrow(async () => {
+    await placeHandlesWithCtrl(interactor, renderWindow);
+  });
+  await renderer.resetCamera();
+  await renderWindow.render();
   // gc.releaseResources();
 });
