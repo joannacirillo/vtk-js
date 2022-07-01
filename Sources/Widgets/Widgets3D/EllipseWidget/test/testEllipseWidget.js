@@ -22,11 +22,11 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function reset(representation, widgetManager, widget) {
-  await representation.reset();
-  await representation.updateRepresentationForRender();
-  await widgetManager.grabFocus(widget);
-}
+// async function reset(representation, widgetManager, widget) {
+//   await representation.reset();
+//   await representation.updateRepresentationForRender();
+//   await widgetManager.grabFocus(widget);
+// }
 
 async function leftPress(interactor, x, y) {
   interactor.handleMouseDown(
@@ -163,8 +163,8 @@ async function placeHandlesWithShift(interactor, renderWindow) {
   await leftRelease(interactor, x, y);
 
   await shiftPress(interactor);
-  x += 6;
-  y -= 2;
+  x += 100;
+  y -= 50;
 
   // Place second handle
   await leftPress(interactor, x, y);
@@ -172,7 +172,7 @@ async function placeHandlesWithShift(interactor, renderWindow) {
   await shiftRelease(interactor);
 }
 
-test.only('Test Ellipse Widget', async (t) => {
+test('Test Ellipse Widget', async (t) => {
   const gc = testUtils.createGarbageCollector(t);
   const fullScreenRenderer = gc.registerResource(
     vtkFullScreenRenderWindow.newInstance({
@@ -197,33 +197,43 @@ test.only('Test Ellipse Widget', async (t) => {
   const w = gc.registerResource(vtkEllipseWidget.newInstance());
   const ellipseWidgetRepresentation = widgetManager.addWidget(w);
   widgetManager.grabFocus(w);
+  ellipseWidgetRepresentation.updateRepresentationForRender();
   widgetManager.enablePicking();
+  renderer.resetCamera();
+  renderWindow.render();
 
+  /******************* Test without key pressed and drag ********************** */
   t.doesNotThrow(async () => {
     await placeHandles(interactor, renderWindow);
   });
   await renderer.resetCamera();
-  await renderWindow.render();
   t.doesNotThrow(async () => {
     await moveHandles(interactor, renderWindow);
   });
-  await ellipseWidgetRepresentation.reset();
+  // Wait that all mouse events are done
+  await sleep(200);
   await ellipseWidgetRepresentation.updateRepresentationForRender();
   await widgetManager.grabFocus(w);
+  /**************************************************************************** */
 
+  /******************* Test with shift pressed  ******************************* */
   t.doesNotThrow(async () => {
     await placeHandlesWithShift(interactor, renderWindow);
   });
   await renderer.resetCamera();
-  await renderWindow.render();
-  await ellipseWidgetRepresentation.reset();
+  // Wait that all mouse and keyboard events are done
+  await sleep(200);
   await ellipseWidgetRepresentation.updateRepresentationForRender();
   await widgetManager.grabFocus(w);
+  /**************************************************************************** */
 
+  /******************* Test with shift pressed  ******************************* */
   t.doesNotThrow(async () => {
     await placeHandlesWithCtrl(interactor, renderWindow);
   });
   await renderer.resetCamera();
-  await renderWindow.render();
+  /**************************************************************************** */
+
+  // await renderWindow.render();
   // gc.releaseResources();
 });

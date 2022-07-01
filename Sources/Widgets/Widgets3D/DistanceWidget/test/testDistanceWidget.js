@@ -13,6 +13,8 @@ import vtkRenderWindowInteractor from 'vtk.js/Sources/Rendering/Core/RenderWindo
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 import vtkDistanceWidget from 'vtk.js/Sources/Widgets/Widgets3D/DistanceWidget';
 
+import baseline from './testDistanceWidget.png';
+
 // --- HELPERS METHODS ------------------------------------
 const ts = 100; // timestep
 
@@ -75,6 +77,28 @@ async function moveHandles(interactor, renderWindow) {
   await leftRelease(interactor, x, y);
 }
 
+function testRender(renderWindow, t) {
+  let resolve;
+  const promise = new Promise((res) => {
+    resolve = res;
+  });
+  const [x, y] = renderWindow.getSize();
+  console.log(x, y);
+  renderWindow.captureNextImage().then((image) => {
+    testUtils.compareImages(
+      image,
+      [baseline],
+      'Widgets/Widgets3D/SplineWidget/test/testSplineWidget',
+      t,
+      5,
+      resolve
+    );
+  });
+  // Trigger a next image
+  renderWindow.render();
+  return promise;
+}
+
 test('Test Distance Widget', async (t) => {
   const gc = testUtils.createGarbageCollector(t);
   const fullScreenRenderer = gc.registerResource(
@@ -108,8 +132,10 @@ test('Test Distance Widget', async (t) => {
   t.doesNotThrow(async () => {
     await placeHandles(interactor, renderWindow);
   });
+  await testRender(renderWindow, t);
   t.doesNotThrow(async () => {
     await moveHandles(interactor, renderWindow);
   });
-  gc.releaseResources();
+  await testRender(renderWindow, t);
+  t.end();
 });
