@@ -170,9 +170,12 @@ async function placeHandlesWithShift(interactor, renderWindow) {
   await leftPress(interactor, x, y);
   await leftRelease(interactor, x, y);
   await shiftRelease(interactor);
+
+  // Wait that all mouse and keyboard events are done
+  // await sleep(10000);
 }
 
-test('Test Ellipse Widget', async (t) => {
+test.only('Test Ellipse Widget', async (t) => {
   const gc = testUtils.createGarbageCollector(t);
   const fullScreenRenderer = gc.registerResource(
     vtkFullScreenRenderWindow.newInstance({
@@ -206,32 +209,32 @@ test('Test Ellipse Widget', async (t) => {
   t.doesNotThrow(async () => {
     await placeHandles(interactor, renderWindow);
   });
-  await renderer.resetCamera();
+  renderer.resetCamera();
+  // Wait that all mouse and keyboard events are done
+  await sleep(200);
   t.doesNotThrow(async () => {
     await moveHandles(interactor, renderWindow);
   });
-  // Wait that all mouse events are done
+  // Wait that all mouse and keyboard events are done
   await sleep(200);
-  await ellipseWidgetRepresentation.updateRepresentationForRender();
-  await widgetManager.grabFocus(w);
+  widgetManager.grabFocus(w);
   /**************************************************************************** */
 
   /******************* Test with shift pressed  ******************************* */
   t.doesNotThrow(async () => {
     await placeHandlesWithShift(interactor, renderWindow);
   });
-  await renderer.resetCamera();
+  renderer.resetCamera();
   // Wait that all mouse and keyboard events are done
   await sleep(200);
-  await ellipseWidgetRepresentation.updateRepresentationForRender();
-  await widgetManager.grabFocus(w);
+  widgetManager.grabFocus(w);
   /**************************************************************************** */
 
   /******************* Test with shift pressed  ******************************* */
   t.doesNotThrow(async () => {
     await placeHandlesWithCtrl(interactor, renderWindow);
   });
-  await renderer.resetCamera();
+  renderer.resetCamera();
   /**************************************************************************** */
 
   // await renderWindow.render();
