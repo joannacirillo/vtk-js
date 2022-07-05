@@ -20,15 +20,18 @@ import vtkImageCroppingWidget from 'vtk.js/Sources/Widgets/Widgets3D/ImageCroppi
 import vtkLineWidget from 'vtk.js/Sources/Widgets/Widgets3D/LineWidget';
 
 import vtkPolyLineWidget from 'vtk.js/Sources/Widgets/Widgets3D/PolyLineWidget';
+import vtkRectangleWidget from 'vtk.js/Sources/Widgets/Widgets3D/RectangleWidget';
+
 import vtkSplineWidget from 'vtk.js/Sources/Widgets/Widgets3D/SplineWidget';
 
 const classesToTest = [
   'vtkAngleWidget',
   'vtkDistanceWidget',
   'vtkEllipseWidget',
-  'vtkImageCroppingWidget',
+  // 'vtkImageCroppingWidget',
   'vtkLineWidget',
   'vtkPolyLineWidget',
+  'vtkRectangleWidget',
   'vtkSplineWidget',
 ];
 
@@ -36,32 +39,32 @@ const WIDGET_CLASSES = {
   vtkAngleWidget: {
     class: vtkAngleWidget,
     numberOfHandles: 3,
-    loseFocusMode: '',
   },
   vtkDistanceWidget: {
     class: vtkDistanceWidget,
     numberOfHandles: 2,
-    loseFocusMode: '',
   },
   vtkEllipseWidget: {
     class: vtkEllipseWidget,
     numberOfHandles: 2,
-    loseFocusMode: '',
+    keysToTest: ['Shift', 'Control'],
   },
   vtkImageCroppingWidget: {
     class: vtkImageCroppingWidget,
     numberOfHandles: 0,
-    loseFocusMode: '',
   },
   vtkLineWidget: {
     class: vtkLineWidget,
     numberOfHandles: 2,
-    loseFocusMode: '',
   },
   vtkPolyLineWidget: {
     class: vtkPolyLineWidget,
     numberOfHandles: 5,
     loseFocusMode: 'Escape',
+  },
+  vtkRectangleWidget: {
+    class: vtkRectangleWidget,
+    numberOfHandles: 2,
   },
   vtkSplineWidget: {
     class: vtkSplineWidget,
@@ -96,7 +99,7 @@ function mouseMove(interactor, x, y) {
   );
 }
 
-function simulateKey(interactor, keyEvent) {
+function keyPress(interactor, keyEvent) {
   interactor.handleKeyDown(
     new KeyboardEvent('keydown', {
       altKey: false,
@@ -106,6 +109,9 @@ function simulateKey(interactor, keyEvent) {
       key: keyEvent,
     })
   );
+}
+
+function keyUp(interactor, keyEvent) {
   interactor.handleKeyUp(
     new KeyboardEvent('keyup', {
       altKey: false,
@@ -162,14 +168,19 @@ classesToTest.forEach((testName) => {
         x /= 2;
         y /= 2;
 
+        // Some widget need mouseMove to be triggerer to set origin of handle
+        mouseMove(interactor, x, y);
+        mouseMove(interactor, x, y);
         for (let i = 0; i < WIDGET_CLASSES[testName].numberOfHandles; i++) {
           leftPress(interactor, x, y);
           leftRelease(interactor, x, y);
 
           y += 200 / WIDGET_CLASSES[testName].numberOfHandles;
           x += 100 / WIDGET_CLASSES[testName].numberOfHandles;
-          // y = WIDGET_CLASSES[testName].points[i][1];
-          // x = WIDGET_CLASSES[testName].points[i][0];
+
+          // Some widget need mouseMove to be triggerer to set origin of handle
+          mouseMove(interactor, x, y);
+          mouseMove(interactor, x, y);
         }
         resolve();
       };
@@ -190,9 +201,10 @@ classesToTest.forEach((testName) => {
       const promise = new Promise((res) => {
         resolve = res;
       });
-      if (WIDGET_CLASSES[testName].loseFocusMode !== '') {
+      if (WIDGET_CLASSES[testName].loseFocusMode) {
         t.doesNotThrow(() => {
-          simulateKey(interactor, WIDGET_CLASSES[testName].loseFocusMode);
+          keyPress(interactor, WIDGET_CLASSES[testName].loseFocusMode);
+          keyUp(interactor, WIDGET_CLASSES[testName].loseFocusMode);
         }, `Press ${WIDGET_CLASSES[testName].loseFocusMode} key to lose focus`);
       }
       resolve();
@@ -235,10 +247,47 @@ classesToTest.forEach((testName) => {
       return promise;
     }
 
+    function testKeyPress() {
+      widgetManager.grabFocus(w);
+      WIDGET_CLASSES[testName].keysToTest?.forEach((keyName) => {
+        let resolve;
+        const promise = new Promise((res) => {
+          resolve = res;
+        });
+        const toTest = async () => {
+          let [x, y] = renderWindow.getSize();
+          x /= 2;
+          y /= 2;
+
+          // Place first handle
+          leftPress(interactor, x, y);
+          leftRelease(interactor, x, y);
+
+          keyPress(interactor, keyName);
+          x += 100;
+          y -= 50;
+
+          // Place second handle
+          leftPress(interactor, x, y);
+          leftRelease(interactor, x, y);
+          keyUp(interactor);
+          resolve();
+        };
+        toTest()
+          .then(() => {
+            t.ok(true, `Press ${keyName}`);
+            widgetManager.grabFocus(w);
+          })
+          .catch((err) => t.fail(`${err}`));
+        return promise;
+      });
+    }
+
     [
       placeHandles,
       pressKeyToLoseFocus,
       moveHandles,
+      testKeyPress,
       gc.releaseResources,
     ].reduce((current, next) => current.then(next), Promise.resolve());
   });
