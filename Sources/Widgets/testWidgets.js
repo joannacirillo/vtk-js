@@ -28,7 +28,7 @@ const classesToTest = [
   'vtkAngleWidget',
   'vtkDistanceWidget',
   'vtkEllipseWidget',
-  // 'vtkImageCroppingWidget',
+  'vtkImageCroppingWidget',
   'vtkLineWidget',
   'vtkPolyLineWidget',
   'vtkRectangleWidget',
@@ -73,7 +73,7 @@ const WIDGET_CLASSES = {
   },
 };
 
-// --- HELPERS METHODS ------------------------------------
+// --- HELPERS METHODS FOR EVENTS ---------------------------------
 const ts = 100; // timestep
 
 function sleep(ms) {
@@ -123,12 +123,21 @@ function keyUp(interactor, keyEvent) {
   );
 }
 
-// --------------------------------------------------------
+// ----------------------------------------------------------
+
+// ----------------------------------------------------------
+// --- TEST HELPERS -----------------------------------------
+function testAsyncFunction(func, t, successMsg) {
+  func()
+    .then(() => t.ok(true, successMsg))
+    .catch((err) => t.fail(`${err}`));
+}
+// ----------------------------------------------------------
 
 classesToTest.forEach((testName) => {
   const classToTest =
     WIDGET_CLASSES[testName].class || WIDGET_CLASSES[testName];
-  test(`Test ${testName} interactions`, async (t) => {
+  test.only(`Test ${testName} interactions`, async (t) => {
     const gc = testUtils.createGarbageCollector(t);
     const fullScreenRenderer = gc.registerResource(
       vtkFullScreenRenderWindow.newInstance({
@@ -163,36 +172,31 @@ classesToTest.forEach((testName) => {
       const promise = new Promise((res) => {
         resolve = res;
       });
-      const toTest = async () => {
-        let [x, y] = renderWindow.getSize();
-        x /= 2;
-        y /= 2;
-
-        // Some widget need mouseMove to be triggerer to set origin of handle
-        mouseMove(interactor, x, y);
-        mouseMove(interactor, x, y);
-        for (let i = 0; i < WIDGET_CLASSES[testName].numberOfHandles; i++) {
-          leftPress(interactor, x, y);
-          leftRelease(interactor, x, y);
-
-          y += 200 / WIDGET_CLASSES[testName].numberOfHandles;
-          x += 100 / WIDGET_CLASSES[testName].numberOfHandles;
+      testAsyncFunction(
+        async () => {
+          let [x, y] = renderWindow.getSize();
+          x /= 2;
+          y /= 2;
 
           // Some widget need mouseMove to be triggerer to set origin of handle
           mouseMove(interactor, x, y);
           mouseMove(interactor, x, y);
-        }
-        resolve();
-      };
-      toTest()
-        .then(() => {
-          t.ok(true, `Put ${WIDGET_CLASSES[testName].numberOfHandles} handles`);
-        })
-        .catch((err) => {
-          t.fail(
-            `Put ${WIDGET_CLASSES[testName].numberOfHandles} handles. Error : ${err}`
-          );
-        });
+          for (let i = 0; i < WIDGET_CLASSES[testName].numberOfHandles; i++) {
+            leftPress(interactor, x, y);
+            leftRelease(interactor, x, y);
+
+            y += 200 / WIDGET_CLASSES[testName].numberOfHandles;
+            x += 100 / WIDGET_CLASSES[testName].numberOfHandles;
+
+            // Some widget need mouseMove to be triggerer to set origin of handle
+            mouseMove(interactor, x, y);
+            mouseMove(interactor, x, y);
+          }
+          resolve();
+        },
+        t,
+        `Put ${WIDGET_CLASSES[testName].numberOfHandles} handles.`
+      );
       return promise;
     }
 
@@ -216,34 +220,31 @@ classesToTest.forEach((testName) => {
       const promise = new Promise((res) => {
         resolve = res;
       });
-      const toTest = async () => {
-        let [x, y] = renderWindow.getSize();
-        x /= 2;
-        y /= 2;
-        y += 200 / WIDGET_CLASSES[testName].numberOfHandles;
-        x += 100 / WIDGET_CLASSES[testName].numberOfHandles;
+      testAsyncFunction(
+        async () => {
+          let [x, y] = renderWindow.getSize();
+          x /= 2;
+          y /= 2;
+          y += 200 / WIDGET_CLASSES[testName].numberOfHandles;
+          x += 100 / WIDGET_CLASSES[testName].numberOfHandles;
 
-        // Select handle
-        leftPress(interactor, x, y);
-        // Need to sleep here to let the time to updateSelection to end
-        await sleep(ts);
-        // Need to call a first mouseMove to trigger 'startMouseMove' before calling the actual mouseMove
-        mouseMove(interactor, x, y);
-        x += 100;
+          // Select handle
+          leftPress(interactor, x, y);
+          // Need to sleep here to let the time to updateSelection to end
+          await sleep(ts);
+          // Need to call a first mouseMove to trigger 'startMouseMove' before calling the actual mouseMove
+          mouseMove(interactor, x, y);
+          x += 100;
 
-        mouseMove(interactor, x, y);
+          mouseMove(interactor, x, y);
 
-        // Release
-        leftRelease(interactor, x, y);
-        resolve();
-      };
-      toTest()
-        .then(() => {
-          t.ok(true, 'Does not throw while moving handles');
-        })
-        .catch((err) => {
-          t.fail(`${err}`);
-        });
+          // Release
+          leftRelease(interactor, x, y);
+          resolve();
+        },
+        t,
+        'Move an handle'
+      );
       return promise;
     }
 
@@ -254,31 +255,27 @@ classesToTest.forEach((testName) => {
         const promise = new Promise((res) => {
           resolve = res;
         });
-        const toTest = async () => {
-          let [x, y] = renderWindow.getSize();
-          x /= 2;
-          y /= 2;
+        testAsyncFunction(
+          async () => {
+            let [x, y] = renderWindow.getSize();
+            x /= 2;
+            y /= 2;
 
-          // Place first handle
-          leftPress(interactor, x, y);
-          leftRelease(interactor, x, y);
+            leftPress(interactor, x, y);
+            leftRelease(interactor, x, y);
 
-          keyPress(interactor, keyName);
-          x += 100;
-          y -= 50;
+            keyPress(interactor, keyName);
+            x += 100;
+            y -= 50;
 
-          // Place second handle
-          leftPress(interactor, x, y);
-          leftRelease(interactor, x, y);
-          keyUp(interactor);
-          resolve();
-        };
-        toTest()
-          .then(() => {
-            t.ok(true, `Press ${keyName}`);
-            widgetManager.grabFocus(w);
-          })
-          .catch((err) => t.fail(`${err}`));
+            leftPress(interactor, x, y);
+            leftRelease(interactor, x, y);
+            keyUp(interactor);
+            resolve();
+          },
+          t,
+          `Place handles with key pressed: ${keyName}`
+        );
         return promise;
       });
     }
