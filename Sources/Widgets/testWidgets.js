@@ -124,8 +124,6 @@ function keyUp(interactor, keyEvent) {
 }
 
 // ----------------------------------------------------------
-
-// ----------------------------------------------------------
 // --- TEST HELPERS -----------------------------------------
 function testAsyncFunction(func, t, successMsg) {
   func()
