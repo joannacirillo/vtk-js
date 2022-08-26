@@ -7,17 +7,12 @@ const VIEW_CONSTRUCTORS = Object.create(null);
 // static methods
 // ----------------------------------------------------------------------------
 
-export function registerViewConstructor(name, constructor) {
-  VIEW_CONSTRUCTORS[name] = constructor;
-}
+export const registerViewConstructor =
+  macro.registerViewConstructor(VIEW_CONSTRUCTORS);
 
-export function listViewAPIs() {
-  return Object.keys(VIEW_CONSTRUCTORS);
-}
+export const newAPISpecificView = macro.newAPISpecificView(VIEW_CONSTRUCTORS);
 
-export function newAPISpecificView(name, initialValues = {}) {
-  return VIEW_CONSTRUCTORS[name] && VIEW_CONSTRUCTORS[name](initialValues);
-}
+export const listViewAPIs = macro.listViewAPIs(VIEW_CONSTRUCTORS);
 
 // ----------------------------------------------------------------------------
 // vtkRenderWindow methods

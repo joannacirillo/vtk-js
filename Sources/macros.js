@@ -963,6 +963,21 @@ export function event(publicAPI, model, eventName) {
   };
 }
 
+export function registerViewConstructor(VIEW_CONSTRUCTORS) {
+  return (name, constructor) => {
+    VIEW_CONSTRUCTORS[name] = constructor;
+  };
+}
+
+export function newAPISpecificView(VIEW_CONSTRUCTORS) {
+  return (name, initialValues = {}) =>
+    VIEW_CONSTRUCTORS[name] && VIEW_CONSTRUCTORS[name](initialValues);
+}
+
+export function listViewAPIs(VIEW_CONSTRUCTORS) {
+  return () => Object.keys(VIEW_CONSTRUCTORS);
+}
+
 // ----------------------------------------------------------------------------
 // newInstance
 // ----------------------------------------------------------------------------
@@ -1716,8 +1731,10 @@ export default {
   getStateArrayMapFunc,
   isVtkObject,
   keystore,
+  listViewAPIs,
   measurePromiseExecution,
   moveToProtected,
+  newAPISpecificView,
   newInstance,
   newTypedArray,
   newTypedArrayFrom,
@@ -1726,6 +1743,7 @@ export default {
   proxy,
   proxyPropertyMapping,
   proxyPropertyState,
+  registerViewConstructor,
   safeArrays,
   set,
   setArray,
