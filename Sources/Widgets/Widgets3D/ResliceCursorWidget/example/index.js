@@ -126,7 +126,7 @@ for (let i = 0; i < 4; i++) {
   const obj = {
     renderWindow: grw.getRenderWindow(),
     renderer: grw.getRenderer(),
-    GLWindow: grw.getOpenGLRenderWindow(),
+    APISpecificWindow: grw.getAPISpecificRenderWindow(),
     interactor: grw.getInteractor(),
     widgetManager: vtkWidgetManager.newInstance(),
     orientationWidget: null,
@@ -135,9 +135,9 @@ for (let i = 0; i < 4; i++) {
   obj.renderer.getActiveCamera().setParallelProjection(true);
   obj.renderer.setBackground(...viewColors[i]);
   obj.renderWindow.addRenderer(obj.renderer);
-  obj.renderWindow.addView(obj.GLWindow);
+  obj.renderWindow.addView(obj.APISpecificWindow);
   obj.renderWindow.setInteractor(obj.interactor);
-  obj.interactor.setView(obj.GLWindow);
+  obj.interactor.setView(obj.APISpecificWindow);
   obj.interactor.initialize();
   obj.interactor.bindEvents(element);
   obj.widgetManager.setRenderer(obj.renderer);
