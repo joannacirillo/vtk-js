@@ -1,5 +1,6 @@
 import macro from 'vtk.js/Sources/macros';
 import vtkOpenGLRenderWindow from 'vtk.js/Sources/Rendering/OpenGL/RenderWindow';
+import vtkWebGPURenderWindow from 'vtk.js/Sources/Rendering/WebGPU/RenderWindow';
 import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
 import vtkRenderWindow from 'vtk.js/Sources/Rendering/Core/RenderWindow';
 import vtkRenderWindowInteractor from 'vtk.js/Sources/Rendering/Core/RenderWindowInteractor';
@@ -12,6 +13,10 @@ import 'vtk.js/Sources/Common/DataModel/PolyData';
 import 'vtk.js/Sources/Rendering/Core/Actor';
 import 'vtk.js/Sources/Rendering/Core/Mapper';
 
+const DEFAULT_VIEW_API = navigator.gpu
+  ? vtkWebGPURenderWindow
+  : vtkOpenGLRenderWindow;
+
 function vtkGenericRenderWindow(publicAPI, model) {
   // Capture resize trigger method to remove from publicAPI
   const invokeResize = publicAPI.invokeResize;
@@ -22,16 +27,16 @@ function vtkGenericRenderWindow(publicAPI, model) {
   model.renderer = vtkRenderer.newInstance();
   model.renderWindow.addRenderer(model.renderer);
 
-  // OpenGLRenderWindow
-  model.openGLRenderWindow = vtkOpenGLRenderWindow.newInstance();
-  model.renderWindow.addView(model.openGLRenderWindow);
+  // API specific RenderWindow
+  model.APISpecificRenderWindow = DEFAULT_VIEW_API.newInstance();
+  model.renderWindow.addView(model.APISpecificRenderWindow);
 
   // Interactor
   model.interactor = vtkRenderWindowInteractor.newInstance();
   model.interactor.setInteractorStyle(
     vtkInteractorStyleTrackballCamera.newInstance()
   );
-  model.interactor.setView(model.openGLRenderWindow);
+  model.interactor.setView(model.APISpecificRenderWindow);
   model.interactor.initialize();
 
   // Expose background
@@ -45,7 +50,7 @@ function vtkGenericRenderWindow(publicAPI, model) {
     if (model.container) {
       const dims = model.container.getBoundingClientRect();
       const devicePixelRatio = window.devicePixelRatio || 1;
-      model.openGLRenderWindow.setSize(
+      model.APISpecificRenderWindow.setSize(
         Math.floor(dims.width * devicePixelRatio),
         Math.floor(dims.height * devicePixelRatio)
       );
@@ -62,7 +67,7 @@ function vtkGenericRenderWindow(publicAPI, model) {
 
     // Switch container
     model.container = el;
-    model.openGLRenderWindow.setContainer(model.container);
+    model.APISpecificRenderWindow.setContainer(model.container);
 
     // Bind to new container
     if (model.container) {
@@ -73,7 +78,7 @@ function vtkGenericRenderWindow(publicAPI, model) {
   // Properly release GL context
   publicAPI.delete = macro.chain(
     publicAPI.setContainer,
-    model.openGLRenderWindow.delete,
+    model.APISpecificRenderWindow.delete,
     publicAPI.delete
   );
 
@@ -104,7 +109,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   macro.get(publicAPI, model, [
     'renderWindow',
     'renderer',
-    'openGLRenderWindow',
+    'APISpecificRenderWindow',
     'interactor',
     'container',
   ]);
